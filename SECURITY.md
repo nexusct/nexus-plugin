@@ -43,5 +43,50 @@ Hooks will run automatically on every commit.
 
 ## Incident history
 
+- **2026-08-15** — Secret scanning alert remediation (NCT-SEC-2026-08-15-001).
+  **Issue**: Google Maps API key `AIzaSyAd72xUaF049-dbkwTAfSvsjQhmp9YLDpk` was committed
+  in git history within `.pre-commit-config.yaml` as part of a pattern-blocking hook.
+  **Remediation**: Key removed from git history using `git-filter-repo`. All instances
+  replaced with `REDACTED_GOOGLE_API_KEY`. Force-push required to update remote history.
+  **Action required**: Owner must rotate the exposed API key in Google Cloud Console.
+  See below for detailed rotation instructions.
+
 - **2026-04-19** — Credential exposure incident (NCT-SEC-2026-04-19-001).
   Rotated: Google Maps API key, admin password. Full report on file.
+
+## API Key Rotation Instructions
+
+### If a Google Maps API key is exposed:
+
+1. **Immediately restrict the exposed key** in Google Cloud Console:
+   - Go to https://console.cloud.google.com/apis/credentials
+   - Find the exposed API key
+   - Click "Edit" → Add application restrictions and API restrictions
+   - Or delete the key if it's no longer in use
+
+2. **Create a new API key**:
+   - In Google Cloud Console, click "Create Credentials" → "API key"
+   - Restrict the new key to specific APIs (e.g., Maps JavaScript API, Places API)
+   - Add HTTP referrer restrictions or IP address restrictions
+   - Copy the new key
+
+3. **Update your server configuration**:
+   ```bash
+   # On your production/staging servers
+   export GOOGLE_MAPS_API_KEY="your-new-api-key-here"
+   # Or update config.js / config.local.js
+   ```
+
+4. **Verify the new key works**:
+   - Test all functionality that uses the Google Maps API
+   - Check server logs for API errors
+
+5. **Delete the old exposed key** from Google Cloud Console after verification.
+
+### General secret rotation workflow:
+
+1. Generate new credential
+2. Update all systems that use it (servers, CI/CD, etc.)
+3. Test thoroughly
+4. Revoke/delete the old credential
+5. Document the rotation in this file with date and reference number
